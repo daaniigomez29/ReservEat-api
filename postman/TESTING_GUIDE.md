@@ -28,6 +28,7 @@ Documentación de endpoints y escenarios para validar el sistema de **mesas, flo
 | 4 | `4 - Reservations (customer)` → Create Reservation | El cliente reserva (solo nº de personas). |
 | 5 | `5 - Reservation management (owner)` | El owner ve la mesa asignada y gestiona estados. |
 | 6 | `6 - Test scenarios` | Validaciones automáticas de los requisitos. |
+| 7 | `7 - Menus (owner/público)` | El owner crea menú → categoría → ítem (guarda `menuId`, `menuCategoryId`, `menuItemId`) y cualquiera consulta el menú del restaurante. |
 
 > **Registro de owner:** el restaurante ya **no** se crea con `POST /restaurants`, sino dentro de `POST /auth/register/owner` (cuenta + restaurante atómico). Ese endpoint devuelve un token que **ya incluye `ROLE_OWNER`**, necesario para gestionar mesas y floor-plan, y el `restaurantId` recién creado.
 >

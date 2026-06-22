@@ -25,20 +25,74 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
-    { "key": "ownerToken", "value": "" },
-    { "key": "ownerUserId", "value": "" },
-    { "key": "customerToken", "value": "" },
-    { "key": "customerUserId", "value": "" },
-    { "key": "restaurantId", "value": "" },
-    { "key": "tableSmallId", "value": "" },
-    { "key": "tableMediumId", "value": "" },
-    { "key": "tableLargeId", "value": "" },
-    { "key": "reservationId", "value": "" },
-    { "key": "dedupFirstId", "value": "" },
-    { "key": "futureSlot", "value": "" },
-    { "key": "slotBestfit", "value": "" },
-    { "key": "slotDedup", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "ownerToken",
+      "value": ""
+    },
+    {
+      "key": "ownerUserId",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "customerUserId",
+      "value": ""
+    },
+    {
+      "key": "restaurantId",
+      "value": ""
+    },
+    {
+      "key": "tableSmallId",
+      "value": ""
+    },
+    {
+      "key": "tableMediumId",
+      "value": ""
+    },
+    {
+      "key": "tableLargeId",
+      "value": ""
+    },
+    {
+      "key": "reservationId",
+      "value": ""
+    },
+    {
+      "key": "dedupFirstId",
+      "value": ""
+    },
+    {
+      "key": "futureSlot",
+      "value": ""
+    },
+    {
+      "key": "slotBestfit",
+      "value": ""
+    },
+    {
+      "key": "slotDedup",
+      "value": ""
+    },
+    {
+      "key": "menuId",
+      "value": ""
+    },
+    {
+      "key": "menuCategoryId",
+      "value": ""
+    },
+    {
+      "key": "menuItemId",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -68,12 +122,27 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"account\": {\n    \"email\": \"owner@test.com\",\n    \"username\": \"owner1\",\n    \"name\": \"Owner Uno\",\n    \"password\": \"password123\",\n    \"tlf\": \"600111222\"\n  },\n  \"restaurant\": {\n    \"name\": \"Restaurante de Pruebas\",\n    \"email\": \"resto-{{$timestamp}}@test.com\",\n    \"tlf\": \"600555666\",\n    \"size\": 12,\n    \"averagePrice\": 25.50,\n    \"cuisineType\": \"SPANISH\",\n    \"dietaryOptions\": [\"VEGETARIAN\", \"GLUTEN_FREE\"],\n    \"street\": \"Calle Mayor 1\",\n    \"city\": \"Madrid\",\n    \"province\": \"Madrid\",\n    \"postalCode\": \"28001\",\n    \"lat\": 40.4168,\n    \"lon\": -3.7038\n  }\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/register/owner", "host": ["{{baseUrl}}"], "path": ["auth", "register", "owner"] }
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/owner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register",
+                "owner"
+              ]
+            }
           }
         },
         {
@@ -95,12 +164,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"owner@test.com\",\n  \"password\": \"password123\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
           }
         },
         {
@@ -124,7 +207,15 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants"
+              ]
+            }
           }
         },
         {
@@ -149,12 +240,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"customer@test.com\",\n  \"username\": \"customer1\",\n  \"name\": \"Cliente Uno\",\n  \"password\": \"password123\",\n  \"tlf\": \"600333444\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
           }
         },
         {
@@ -175,12 +280,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"customer@test.com\",\n  \"password\": \"password123\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
           }
         }
       ]
@@ -193,7 +312,16 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}"
+              ]
+            }
           }
         },
         {
@@ -201,7 +329,15 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants"
+              ]
+            }
           }
         },
         {
@@ -211,11 +347,22 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/restaurants/search?city=Madrid&cuisineType=SPANISH",
-              "host": ["{{baseUrl}}"],
-              "path": ["restaurants", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "search"
+              ],
               "query": [
-                { "key": "city", "value": "Madrid" },
-                { "key": "cuisineType", "value": "SPANISH" }
+                {
+                  "key": "city",
+                  "value": "Madrid"
+                },
+                {
+                  "key": "cuisineType",
+                  "value": "SPANISH"
+                }
               ]
             }
           }
@@ -243,14 +390,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"label\": \"M1\",\n  \"capacity\": 2,\n  \"zone\": \"INTERIOR\",\n  \"shape\": \"CIRCLE\",\n  \"x\": 100,\n  \"y\": 100,\n  \"width\": 70,\n  \"height\": 70,\n  \"rotation\": 0\n}"
             },
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "tables"
+              ]
+            }
           }
         },
         {
@@ -271,14 +434,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"label\": \"M2\",\n  \"capacity\": 4,\n  \"zone\": \"INTERIOR\",\n  \"shape\": \"RECTANGLE\",\n  \"x\": 300,\n  \"y\": 100,\n  \"width\": 120,\n  \"height\": 80,\n  \"rotation\": 0\n}"
             },
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "tables"
+              ]
+            }
           }
         },
         {
@@ -299,22 +478,53 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"label\": \"M3\",\n  \"capacity\": 6,\n  \"zone\": \"TERRAZA\",\n  \"shape\": \"RECTANGLE\",\n  \"x\": 500,\n  \"y\": 100,\n  \"width\": 160,\n  \"height\": 90,\n  \"rotation\": 0\n}"
             },
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "tables"
+              ]
+            }
           }
         },
         {
           "name": "List Tables",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "tables"
+              ]
+            }
           }
         },
         {
@@ -322,22 +532,55 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"label\": \"M1\",\n  \"capacity\": 3,\n  \"zone\": \"INTERIOR\",\n  \"shape\": \"CIRCLE\",\n  \"x\": 100,\n  \"y\": 100,\n  \"width\": 80,\n  \"height\": 80,\n  \"rotation\": 0,\n  \"active\": true\n}"
             },
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables/{{tableSmallId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables", "{{tableSmallId}}"] }
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables/{{tableSmallId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "tables",
+                "{{tableSmallId}}"
+              ]
+            }
           }
         },
         {
           "name": "Delete Table (soft) - opcional",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables/{{tableSmallId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables", "{{tableSmallId}}"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables/{{tableSmallId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "tables",
+                "{{tableSmallId}}"
+              ]
+            }
           }
         }
       ]
@@ -349,20 +592,51 @@
           "name": "Floor-plan ahora",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/floor-plan", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "floor-plan"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/floor-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "floor-plan"
+              ]
+            }
           }
         },
         {
           "name": "Floor-plan en la franja reservada",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/floor-plan?at={{futureSlot}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["restaurants", "{{restaurantId}}", "floor-plan"],
-              "query": [{ "key": "at", "value": "{{futureSlot}}" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurants",
+                "{{restaurantId}}",
+                "floor-plan"
+              ],
+              "query": [
+                {
+                  "key": "at",
+                  "value": "{{futureSlot}}"
+                }
+              ]
             }
           }
         }
@@ -391,28 +665,58 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{futureSlot}}\",\n  \"partySize\": 3\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
           }
         },
         {
           "name": "Mis reservas",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/reservations/my?page=0&size=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["reservations", "my"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "my"
+              ],
               "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
               ]
             }
           }
@@ -421,16 +725,45 @@
           "name": "Reserva por id",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}"
+              ]
+            }
           }
         },
         {
           "name": "Cancelar reserva",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "cancel"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "cancel"
+              ]
+            }
           }
         }
       ]
@@ -458,8 +791,23 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["reservations", "restaurant", "{{restaurantId}}"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/restaurant/{{restaurantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "restaurant",
+                "{{restaurantId}}"
+              ]
+            }
           }
         },
         {
@@ -467,14 +815,30 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tableId\": {{tableLargeId}}\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/assign-table", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "assign-table"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/assign-table",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "assign-table"
+              ]
+            }
           }
         },
         {
@@ -492,8 +856,23 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/seat", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "seat"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/seat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "seat"
+              ]
+            }
           }
         },
         {
@@ -511,16 +890,46 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/complete", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "complete"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "complete"
+              ]
+            }
           }
         },
         {
           "name": "No-show",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/no-show", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "no-show"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/no-show",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "no-show"
+              ]
+            }
           }
         }
       ]
@@ -549,14 +958,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{slotBestfit}}\",\n  \"partySize\": 4\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
           }
         },
         {
@@ -578,8 +1001,23 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
-            "url": { "raw": "{{baseUrl}}/reservations/restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["reservations", "restaurant", "{{restaurantId}}"] }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/restaurant/{{restaurantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "restaurant",
+                "{{restaurantId}}"
+              ]
+            }
           }
         },
         {
@@ -599,14 +1037,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{futureSlot}}\",\n  \"partySize\": 50\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
           }
         },
         {
@@ -627,14 +1079,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{slotDedup}}\",\n  \"partySize\": 2\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
           }
         },
         {
@@ -655,14 +1121,245 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{slotDedup}}\",\n  \"partySize\": 2\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 - Menus (owner/público)",
+      "item": [
+        {
+          "name": "Create Menu (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('menuId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus/restaurant/{{restaurantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menus",
+                "restaurant",
+                "{{restaurantId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Category (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('menuCategoryId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Entrantes\",\n  \"menuId\": \"{{menuId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/menus/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menus",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Item (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('menuItemId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Croquetas de jamón\",\n  \"description\": \"Caseras, 6 unidades\",\n  \"price\": 8.5,\n  \"menuCategoryId\": \"{{menuCategoryId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/menus/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menus",
+                "items"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Menu by Restaurant (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menus/restaurant/{{restaurantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menus",
+                "restaurant",
+                "{{restaurantId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Item (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus/items/{{menuItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menus",
+                "items",
+                "{{menuItemId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/menus/categories/{{menuCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "menus",
+                "categories",
+                "{{menuCategoryId}}"
+              ]
+            }
           }
         }
       ]

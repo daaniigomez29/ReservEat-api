@@ -2,7 +2,6 @@ package com.restaurant.infrastructure.persistence.adapter;
 
 import com.restaurant.domain.model.MenuCategory;
 import com.restaurant.domain.repository.MenuCategoryRepository;
-import com.restaurant.infrastructure.persistence.entity.MenuCategoryEntity;
 import com.restaurant.infrastructure.persistence.mapper.MenuCategoryMapper;
 import com.restaurant.infrastructure.persistence.repository.JpaMenuCategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,7 @@ public class MenuCategoryRepositoryAdapter implements MenuCategoryRepository {
 
     @Override
     public MenuCategory save(MenuCategory category) {
-        return menuCategoryMapper.toDomain(jpa.save(toEntity(category)));
+        return menuCategoryMapper.toDomain(jpa.save(menuCategoryMapper.toEntity(category)));
     }
 
     @Override
@@ -37,12 +36,5 @@ public class MenuCategoryRepositoryAdapter implements MenuCategoryRepository {
     @Override
     public void deleteById(Long id) {
         jpa.deleteById(id);
-    }
-
-    private MenuCategoryEntity toEntity(MenuCategory c) {
-        return MenuCategoryEntity.builder()
-                .id(c.getId())
-                .name(c.getName())
-                .build();
     }
 }

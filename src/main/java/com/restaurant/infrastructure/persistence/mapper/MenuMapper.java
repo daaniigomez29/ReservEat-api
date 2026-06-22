@@ -16,9 +16,9 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class MenuMapper {
-    private MenuCategoryMapper menuCategoryMapper;
-    private JpaMenuCategoryRepository menuCategoryRepository;
-    private JpaRestaurantRepository restaurantRepository;
+    private final MenuCategoryMapper menuCategoryMapper;
+    private final JpaMenuCategoryRepository menuCategoryRepository;
+    private final JpaRestaurantRepository restaurantRepository;
 
     public Menu toDomain(MenuEntity c) {
         List<MenuCategory> domainList = menuCategoryRepository.findByMenuEntity_Id(c.getId()).stream().map(menuCategoryMapper::toDomain).toList();

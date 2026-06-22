@@ -27,7 +27,7 @@ public class ReservationReminderService implements ReservationReminderUseCase {
     private final RestaurantRepository restaurantRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Value("${app.reminder.lead-time-hours:24}")
+    @Value("${reservation.reminder.lead-time-hours:24}")
     private long leadTimeHours;
 
     @Override

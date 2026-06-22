@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MenuItemMapper {
-    private JpaMenuCategoryRepository menuCategoryRepository;
+    private final JpaMenuCategoryRepository menuCategoryRepository;
 
     public MenuItem toDomain(MenuItemEntity e) {
         return MenuItem.builder()

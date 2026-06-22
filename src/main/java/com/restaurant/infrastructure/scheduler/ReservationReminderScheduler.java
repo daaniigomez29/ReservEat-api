@@ -17,7 +17,7 @@ public class ReservationReminderScheduler {
 
     private final ReservationReminderUseCase reservationReminderUseCase;
 
-    @Scheduled(cron = "${app.reminder.cron:0 */15 * * * *}")
+    @Scheduled(cron = "${reservation.reminder.cron:0 */15 * * * *}")
     public void run() {
         try {
             reservationReminderUseCase.sendDueReminders();
