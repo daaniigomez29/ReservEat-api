@@ -86,6 +86,12 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
     }
 
     @Override
+    public List<Reservation> findRemindable(LocalDateTime from, LocalDateTime to) {
+        return jpa.findRemindable(from, to).stream()
+                .map(this::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteById(Long id) {
         jpa.deleteById(id);
     }
@@ -102,6 +108,7 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
                 .userId(r.getUserId())
                 .status(r.getStatus())
                 .createdAt(r.getCreatedAt())
+                .reminderSent(r.isReminderSent())
                 .build();
     }
 
@@ -117,6 +124,7 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
                 .userId(e.getUserId())
                 .status(e.getStatus())
                 .createdAt(e.getCreatedAt())
+                .reminderSent(e.isReminderSent())
                 .build();
     }
 }

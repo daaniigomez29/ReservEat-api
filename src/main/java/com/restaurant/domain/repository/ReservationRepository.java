@@ -56,5 +56,11 @@ public interface ReservationRepository {
 
     List<Reservation> findByRestaurantIdAndStatus(Long restaurantId, ReservationStatus status);
 
+    /**
+     * Confirmed reservations starting within [from, to] that have not yet had their
+     * upcoming-reservation reminder sent. Used by the scheduled reminder job.
+     */
+    List<Reservation> findRemindable(LocalDateTime from, LocalDateTime to);
+
     void deleteById(Long id);
 }

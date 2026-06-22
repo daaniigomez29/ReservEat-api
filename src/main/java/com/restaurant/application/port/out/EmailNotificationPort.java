@@ -24,4 +24,7 @@ public interface EmailNotificationPort {
 
     /** Notifies the booker that their reservation was cancelled. */
     void sendReservationCancellation(Reservation reservation, String restaurantName);
+
+    /** Reminds the booker about their upcoming reservation (~24h before). */
+    void sendReservationReminder(Reservation reservation, String restaurantName);
 }

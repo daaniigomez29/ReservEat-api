@@ -86,6 +86,19 @@ final class EmailTemplates {
                 """.formatted(escape(restaurantName), detailsTable(reservation)));
     }
 
+    static String reservationReminder(Reservation reservation, String restaurantName) {
+        return layout("""
+                <h1 style="margin:0 0 16px;font-size:22px;color:#111827;">Recordatorio de tu reserva ⏰</h1>
+                <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
+                    Te recordamos que tienes una reserva en <strong>%s</strong> en las próximas horas:
+                </p>
+                %s
+                <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#374151;">
+                    ¡Te esperamos!
+                </p>
+                """.formatted(escape(restaurantName), detailsTable(reservation)));
+    }
+
     /** Renders the shared reservation details block (date and party size). */
     private static String detailsTable(Reservation reservation) {
         return """

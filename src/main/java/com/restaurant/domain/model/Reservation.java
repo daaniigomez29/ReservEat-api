@@ -26,6 +26,8 @@ public class Reservation {
     private Long userId;
     private ReservationStatus status;
     private LocalDateTime createdAt;
+    // Whether the upcoming-reservation reminder email has already been sent.
+    private boolean reminderSent;
 
     // Default reservation window is 2 hours
     public static final int DEFAULT_DURATION_HOURS = 2;
@@ -62,6 +64,10 @@ public class Reservation {
             throw new DomainException("Only a SEATED or CONFIRMED reservation can be completed");
         }
         this.status = ReservationStatus.COMPLETED;
+    }
+
+    public void markReminderSent() {
+        this.reminderSent = true;
     }
 
     /** The party never showed up. */

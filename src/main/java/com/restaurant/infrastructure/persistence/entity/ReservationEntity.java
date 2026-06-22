@@ -53,4 +53,7 @@ public class ReservationEntity {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "reminder_sent", nullable = false, columnDefinition = "boolean default false")
+    private boolean reminderSent;
 }

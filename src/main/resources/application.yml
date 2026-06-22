@@ -28,6 +28,12 @@ reservation:
   # Anti-duplicate window (seconds): a second identical booking by the same user
   # within this window is treated as an accidental double-submit and deduplicated.
   dedup-window-seconds: ${RESERVATION_DEDUP_WINDOW:10}
+  
+  reminder:
+    # Remind bookers about confirmed reservations starting within this many hours.
+    lead-time-hours: ${REMINDER_LEAD_TIME_HOURS:24}
+    # How often the reminder job runs (Spring cron: sec min hour day month weekday).
+    cron: ${REMINDER_CRON:0 */15 * * * *}
 
 jwt:
   expiration: 86400000       # 24 hours in ms

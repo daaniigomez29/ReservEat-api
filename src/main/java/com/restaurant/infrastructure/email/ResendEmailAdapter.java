@@ -58,6 +58,14 @@ public class ResendEmailAdapter implements EmailNotificationPort {
                 EmailTemplates.reservationCancellation(reservation, restaurantName));
     }
 
+    @Async
+    @Override
+    public void sendReservationReminder(Reservation reservation, String restaurantName) {
+        send(reservation.getBookerEmail(),
+                "Recordatorio de tu reserva en " + restaurantName,
+                EmailTemplates.reservationReminder(reservation, restaurantName));
+    }
+
     private void send(String to, String subject, String html) {
         if (to == null || to.isBlank()) {
             log.warn("Skipping email '{}': no recipient address", subject);

@@ -8,6 +8,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import com.restaurant.application.port.out.EmailNotificationPort;
 import com.restaurant.domain.event.ReservationCancelledEvent;
 import com.restaurant.domain.event.ReservationCreatedEvent;
+import com.restaurant.domain.event.ReservationReminderEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,5 +27,11 @@ public class ReservationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onReservationCancelled(ReservationCancelledEvent event) {
         emailNotificationPort.sendReservationCancellation(event.reservation(), event.restaurantName());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onReservationReminder(ReservationReminderEvent event) {
+        emailNotificationPort.sendReservationReminder(event.reservation(), event.restaurantName());
     }
 }

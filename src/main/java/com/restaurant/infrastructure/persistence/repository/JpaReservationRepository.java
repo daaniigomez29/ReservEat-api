@@ -89,4 +89,16 @@ public interface JpaReservationRepository extends JpaRepository<ReservationEntit
             @Param("restaurantId") Long restaurantId,
             @Param("startDate") LocalDateTime startDate,
             @Param("createdAfter") LocalDateTime createdAfter);
+
+    @Query("""
+            SELECT r FROM ReservationEntity r
+            WHERE r.status = 'CONFIRMED'
+              AND r.reminderSent = false
+              AND r.startDate >= :from
+              AND r.startDate <= :to
+            ORDER BY r.startDate ASC
+            """)
+    List<ReservationEntity> findRemindable(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }
