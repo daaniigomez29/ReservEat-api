@@ -108,8 +108,6 @@ infrastructure/    # Detalles técnicos (adaptadores)
   config/          #   configuración transversal
 ```
 
-> Hay una nota de arquitectura del frontend en [`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md).
-
 ---
 
 ## Requisitos previos
