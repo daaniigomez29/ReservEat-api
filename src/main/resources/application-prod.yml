@@ -1,0 +1,27 @@
+spring:
+    datasource:
+        url: ${DB_URL}
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    
+    jpa:
+        hibernate:
+            ddl-auto: validate
+
+jwt:
+  secret: ${JWT_SECRET}
+
+
+resend:
+  # API key from the Resend dashboard. Never commit a real key — set it via env var.
+  api-key: ${RESEND_API_KEY}
+  # Sender identity. Must be a verified domain in Resend; onboarding@resend.dev only
+  # delivers to the account owner's address and is for testing.
+  from: ${MAIL_FROM:Restaurant <onboarding@resend.dev>}
+
+
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID}
+    jwk-set-uri: ${GOOGLE_JWK_SET_URI}

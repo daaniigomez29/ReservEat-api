@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: restaurant-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+server:   
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+reservation:
+  # Minimum gap (minutes) enforced between two reservations on the same table
+  # to allow cleanup/turnover. Applied when checking table availability.
+  turnover-buffer-minutes: ${RESERVATION_TURNOVER_BUFFER:30}
+  # Anti-duplicate window (seconds): a second identical booking by the same user
+  # within this window is treated as an accidental double-submit and deduplicated.
+  dedup-window-seconds: ${RESERVATION_DEDUP_WINDOW:10}
+
+jwt:
+  expiration: 86400000       # 24 hours in ms
+  refresh-expiration: 604800000  # 7 days in ms
+
+
+app:
+  verification:
+    # How long a verification link stays valid.
+    token-ttl-hours: ${VERIFICATION_TTL_HOURS:24}
+    # Public URL of this API's GET /auth/verify endpoint, embedded in the email link.
+    verify-base-url: ${VERIFY_BASE_URL:http://localhost:8080/api/v1/auth/verify}
+  frontend:
+    # Pages the user is redirected to after clicking the verification link.
+    email-verified-url: ${FRONTEND_EMAIL_VERIFIED_URL:http://localhost:3000/email-verificado}
+    email-verify-error-url: ${FRONTEND_EMAIL_VERIFY_ERROR_URL:http://localhost:3000/email-error}
+

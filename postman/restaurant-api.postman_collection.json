@@ -1,0 +1,671 @@
+{
+  "info": {
+    "name": "Restaurant API - Mesas y Reservas",
+    "description": "Colección para probar el flujo de mesas, floor-plan, reservas con asignación greedy, gestión del owner e idempotencia. Base URL: http://localhost:8080/api/v1\n\nORDEN RECOMENDADO:\n1) Auth > Register Owner (una vez) y Login Owner\n2) Auth > Register Customer (una vez) y Login Customer\n3) Restaurants > Create Restaurant\n4) Tables > crear M1(2), M2(4), M3(6)\n5) Reservations (customer) > Create Reservation\n6) Reservation management (owner) > ver/seat/complete\n7) Test scenarios > best-fit, conflicto de aforo, dedup doble-click",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Calcula franjas futuras a las 20:00 en días distintos, para que los escenarios",
+          "// no compartan mesa entre sí (cada uno reserva en su propio día).",
+          "const pad = (n) => String(n).padStart(2, '0');",
+          "const slotAt = (daysAhead) => {",
+          "  const d = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);",
+          "  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T20:00`;",
+          "};",
+          "pm.collectionVariables.set('futureSlot', slotAt(30));   // folders 3,4,5",
+          "pm.collectionVariables.set('slotBestfit', slotAt(31));  // escenario A",
+          "pm.collectionVariables.set('slotDedup', slotAt(32));    // escenario C"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "ownerToken", "value": "" },
+    { "key": "ownerUserId", "value": "" },
+    { "key": "customerToken", "value": "" },
+    { "key": "customerUserId", "value": "" },
+    { "key": "restaurantId", "value": "" },
+    { "key": "tableSmallId", "value": "" },
+    { "key": "tableMediumId", "value": "" },
+    { "key": "tableLargeId", "value": "" },
+    { "key": "reservationId", "value": "" },
+    { "key": "dedupFirstId", "value": "" },
+    { "key": "futureSlot", "value": "" },
+    { "key": "slotBestfit", "value": "" },
+    { "key": "slotDedup", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0 - Auth",
+      "item": [
+        {
+          "name": "Register Owner + Restaurant (una vez)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('ownerToken', j.token);",
+                  "  pm.collectionVariables.set('ownerUserId', j.userId);",
+                  "  pm.collectionVariables.set('restaurantId', j.restaurantId);",
+                  "  pm.test('Owner creado con ROLE_OWNER', () => pm.expect(j.restaurantRole).to.eql('OWNER'));",
+                  "  pm.test('Devuelve restaurantId', () => pm.expect(j.restaurantId).to.be.a('number'));",
+                  "} else {",
+                  "  pm.test('Owner ya existía (usa Login Owner + resolver restaurante)', () => pm.expect([400,409]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account\": {\n    \"email\": \"owner@test.com\",\n    \"username\": \"owner1\",\n    \"name\": \"Owner Uno\",\n    \"password\": \"password123\",\n    \"tlf\": \"600111222\"\n  },\n  \"restaurant\": {\n    \"name\": \"Restaurante de Pruebas\",\n    \"email\": \"resto-{{$timestamp}}@test.com\",\n    \"tlf\": \"600555666\",\n    \"size\": 12,\n    \"averagePrice\": 25.50,\n    \"cuisineType\": \"SPANISH\",\n    \"dietaryOptions\": [\"VEGETARIAN\", \"GLUTEN_FREE\"],\n    \"street\": \"Calle Mayor 1\",\n    \"city\": \"Madrid\",\n    \"province\": \"Madrid\",\n    \"postalCode\": \"28001\",\n    \"lat\": 40.4168,\n    \"lon\": -3.7038\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register/owner", "host": ["{{baseUrl}}"], "path": ["auth", "register", "owner"] }
+          }
+        },
+        {
+          "name": "Login Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('ownerToken', j.token);",
+                  "pm.collectionVariables.set('ownerUserId', j.userId);",
+                  "pm.test('Token con ROLE_OWNER', () => pm.expect(j.restaurantRole).to.eql('OWNER'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@test.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Resolver restaurantId del owner (re-runs)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Solo necesario tras Login Owner en una sesión nueva (el login no devuelve restaurantId).",
+                  "const arr = pm.response.json();",
+                  "const ownerId = Number(pm.collectionVariables.get('ownerUserId'));",
+                  "const mine = arr.find(r => r.ownerId === ownerId);",
+                  "pm.test('Encontrado el restaurante del owner', () => pm.expect(mine).to.be.an('object'));",
+                  "if (mine) pm.collectionVariables.set('restaurantId', mine.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] }
+          }
+        },
+        {
+          "name": "Register Customer (una vez)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('customerToken', j.token);",
+                  "  pm.collectionVariables.set('customerUserId', j.userId);",
+                  "  pm.test('Customer registrado', () => pm.expect(j.token).to.be.a('string'));",
+                  "} else {",
+                  "  pm.test('Customer ya existía (usa Login Customer)', () => pm.expect([400,409]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@test.com\",\n  \"username\": \"customer1\",\n  \"name\": \"Cliente Uno\",\n  \"password\": \"password123\",\n  \"tlf\": \"600333444\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('customerToken', j.token);",
+                  "pm.collectionVariables.set('customerUserId', j.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@test.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1 - Restaurants (público)",
+      "item": [
+        {
+          "name": "Get Restaurant by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] }
+          }
+        },
+        {
+          "name": "List Restaurants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] }
+          }
+        },
+        {
+          "name": "Search Restaurants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/search?city=Madrid&cuisineType=SPANISH",
+              "host": ["{{baseUrl}}"],
+              "path": ["restaurants", "search"],
+              "query": [
+                { "key": "city", "value": "Madrid" },
+                { "key": "cuisineType", "value": "SPANISH" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Tables (owner)",
+      "item": [
+        {
+          "name": "Create Table M1 (cap 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tableSmallId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"M1\",\n  \"capacity\": 2,\n  \"zone\": \"INTERIOR\",\n  \"shape\": \"CIRCLE\",\n  \"x\": 100,\n  \"y\": 100,\n  \"width\": 70,\n  \"height\": 70,\n  \"rotation\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+          }
+        },
+        {
+          "name": "Create Table M2 (cap 4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tableMediumId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"M2\",\n  \"capacity\": 4,\n  \"zone\": \"INTERIOR\",\n  \"shape\": \"RECTANGLE\",\n  \"x\": 300,\n  \"y\": 100,\n  \"width\": 120,\n  \"height\": 80,\n  \"rotation\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+          }
+        },
+        {
+          "name": "Create Table M3 (cap 6)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tableLargeId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"M3\",\n  \"capacity\": 6,\n  \"zone\": \"TERRAZA\",\n  \"shape\": \"RECTANGLE\",\n  \"x\": 500,\n  \"y\": 100,\n  \"width\": 160,\n  \"height\": 90,\n  \"rotation\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+          }
+        },
+        {
+          "name": "List Tables",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables"] }
+          }
+        },
+        {
+          "name": "Update Table M1 (cap 3)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"M1\",\n  \"capacity\": 3,\n  \"zone\": \"INTERIOR\",\n  \"shape\": \"CIRCLE\",\n  \"x\": 100,\n  \"y\": 100,\n  \"width\": 80,\n  \"height\": 80,\n  \"rotation\": 0,\n  \"active\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables/{{tableSmallId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables", "{{tableSmallId}}"] }
+          }
+        },
+        {
+          "name": "Delete Table (soft) - opcional",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/tables/{{tableSmallId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "tables", "{{tableSmallId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Floor-plan (owner)",
+      "item": [
+        {
+          "name": "Floor-plan ahora",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/floor-plan", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}", "floor-plan"] }
+          }
+        },
+        {
+          "name": "Floor-plan en la franja reservada",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/restaurants/{{restaurantId}}/floor-plan?at={{futureSlot}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["restaurants", "{{restaurantId}}", "floor-plan"],
+              "query": [{ "key": "at", "value": "{{futureSlot}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Reservations (customer)",
+      "item": [
+        {
+          "name": "Create Reservation (party 3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Nace CONFIRMED', () => pm.expect(j.status).to.eql('CONFIRMED'));",
+                  "pm.test('El cliente NO ve mesa', () => pm.expect(j.tableId === undefined || j.tableId === null).to.be.true);",
+                  "pm.collectionVariables.set('reservationId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{futureSlot}}\",\n  \"partySize\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "Mis reservas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/my?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "my"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reserva por id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}"] }
+          }
+        },
+        {
+          "name": "Cancelar reserva",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Reservation management (owner)",
+      "item": [
+        {
+          "name": "Reservas del restaurante (ve mesa)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const arr = pm.response.json();",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El owner SÍ ve tableId/tableLabel', () => {",
+                  "  pm.expect(arr).to.be.an('array');",
+                  "  if (arr.length) pm.expect(arr[0]).to.have.property('tableId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["reservations", "restaurant", "{{restaurantId}}"] }
+          }
+        },
+        {
+          "name": "Reasignar mesa (a M3)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ownerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tableId\": {{tableLargeId}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/assign-table", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "assign-table"] }
+          }
+        },
+        {
+          "name": "Sentar (seat)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('SEATED', () => pm.expect(pm.response.json().status).to.eql('SEATED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/seat", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "seat"] }
+          }
+        },
+        {
+          "name": "Completar (complete)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('COMPLETED', () => pm.expect(pm.response.json().status).to.eql('COMPLETED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/complete", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "complete"] }
+          }
+        },
+        {
+          "name": "No-show",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/{{reservationId}}/no-show", "host": ["{{baseUrl}}"], "path": ["reservations", "{{reservationId}}", "no-show"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Test scenarios (requisitos)",
+      "item": [
+        {
+          "name": "A) Best-fit: party 4 -> mesa de capacidad 4 (M2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('reservationId', j.id);",
+                  "pm.test('CONFIRMED', () => pm.expect(j.status).to.eql('CONFIRMED'));",
+                  "// La mesa asignada se verifica en la siguiente petición (owner). Aquí solo guardamos el id.",
+                  "// party 4 no cabe en M1 (cap 2-3), cabe justo en M2 (4) y tambien en M3 (6) -> best-fit = M2."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{slotBestfit}}\",\n  \"partySize\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "A.2) Verificar best-fit = M2 (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const arr = pm.response.json();",
+                  "const rid = Number(pm.collectionVariables.get('reservationId'));",
+                  "const r = arr.find(x => x.id === rid);",
+                  "pm.test('Reserva encontrada', () => pm.expect(r).to.be.an('object'));",
+                  "pm.test('Asignó la mesa de capacidad 4 (label M2)', () => pm.expect(r.tableLabel).to.eql('M2'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ownerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["reservations", "restaurant", "{{restaurantId}}"] }
+          }
+        },
+        {
+          "name": "B) Conflicto de aforo: party 50 -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Mensaje sin mesa disponible', () => pm.expect(pm.response.text()).to.include('No table available'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{futureSlot}}\",\n  \"partySize\": 50\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "C.1) Doble-click 1ª llamada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('dedupFirstId', j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{slotDedup}}\",\n  \"partySize\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "C.2) Doble-click 2ª llamada (dedup, <10s)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "const firstId = Number(pm.collectionVariables.get('dedupFirstId'));",
+                  "pm.test('Devuelve la MISMA reserva (mismo id)', () => pm.expect(j.id).to.eql(firstId));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurantId\": {{restaurantId}},\n  \"startDate\": \"{{slotDedup}}\",\n  \"partySize\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        }
+      ]
+    }
+  ]
+}
