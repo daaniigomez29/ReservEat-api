@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
+                        // Health check for the deployment platform (Railway)
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         // Table and floor-plan endpoints are owner/admin only —
                         // must come BEFORE the public /restaurants GET rule
                         .requestMatchers("/restaurants/*/tables/**").hasAnyRole("OWNER", "ADMIN")

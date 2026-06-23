@@ -1,0 +1,21 @@
+name: restaurant-api-workflow
+
+on:
+ push:
+  branches: [ "main" ]
+ pull_request:
+  branches: [ "main" ]
+
+jobs:
+ build:
+  runs-on: ubuntu-latest
+  steps:
+  - uses: actions/checkout@v7
+  - uses: actions/setup-java@v5
+    with:
+     distribution: 'temurin'
+     java-version: '21'
+  - name: Build app
+    run: mvn -B clean package -DskipTests
+
+

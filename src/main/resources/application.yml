@@ -16,6 +16,27 @@ spring:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
+  flyway:
+    # Schema migrations live in classpath:db/migration (V1__init.sql, V2__..., ...).
+    # baseline-on-migrate lets Flyway adopt a pre-existing, non-empty schema
+    # (e.g. a DB previously built by Hibernate ddl-auto) by marking the baseline
+    # as already applied instead of failing.
+    baseline-on-migrate: true
+
+# Actuator: expose only health/info. The platform (Railway) uses health for
+# liveness/readiness checks. With the API context-path, the URL is
+# /api/v1/actuator/health.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
 server:   
   port: 8080
   servlet:

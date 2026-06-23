@@ -1,0 +1,24 @@
+# Build output (the image builds the jar itself)
+target/
+
+# Git & IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+
+# Local-only config with secrets (never ship into the image)
+src/main/resources/application-dev.yml
+
+# Docs, tooling, frontend — not needed to build the backend image
+README.md
+HELP.md
+postman/
+frontend/
+.cursor/
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml

@@ -1,0 +1,46 @@
+# Local stack to test the production image end-to-end (app + MySQL).
+# Runs the app with the `prod` profile so Flyway applies V1 and Hibernate
+# `validate` is exercised against a real MySQL — the same path as Railway.
+#
+#   docker compose up --build
+#
+# Secrets here are throwaway local placeholders, not real credentials.
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: restaurant
+      MYSQL_USER: restaurant
+      MYSQL_PASSWORD: restaurant
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  app:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: "jdbc:mysql://mysql:3306/restaurant?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+      DB_USERNAME: restaurant
+      DB_PASSWORD: restaurant
+      JWT_SECRET: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+      RESEND_API_KEY: "re_local_placeholder"
+      MAIL_FROM: "Restaurant <onboarding@resend.dev>"
+      GOOGLE_CLIENT_ID: "local-placeholder.apps.googleusercontent.com"
+      GOOGLE_JWK_SET_URI: "https://www.googleapis.com/oauth2/v3/certs"
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:
