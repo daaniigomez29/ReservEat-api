@@ -9,17 +9,37 @@ on:
 jobs:
  build:
   runs-on: ubuntu-latest
+
+  permissions:
+   contents: read
+   packages: write
+
   steps:
   - name: Check out repository code
     uses: actions/checkout@v7
+
   - name: Install java
     uses: actions/setup-java@v5
     with:
      distribution: 'temurin'
      java-version: '21'
      cache: 'maven'
+
   - name: Build app with Maven
     run: mvn -B clean package -DskipTests
+
+  - name: Login Docker Hub
+    uses: docker/login-action@v4
+    with:
+     registry: ghcr.io
+     username: ${{ github.actor }}
+     password: ${{ secrets.GITHUB_TOKEN }}
+
+  - name: Build Dockerfile image
+    run: docker build -t ghcr.io/daaniigomez29/reserveat-api:1.0.0 .
+
+  - name: Push Dockerfile image
+    run: docker push ghcr.io/daaniigomez29/reserveat-api:1.0.0
     
 
 
