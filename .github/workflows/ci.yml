@@ -26,7 +26,7 @@ jobs:
      cache: 'maven'
 
   - name: Build app with Maven
-    run: mvn -B clean package -DskipTests
+    run: mvn -B clean package
 
   - name: Login Github Container Registry
     uses: docker/login-action@v4
@@ -36,10 +36,12 @@ jobs:
      password: ${{ secrets.GITHUB_TOKEN }}
 
   - name: Build Dockerfile image
-    run: docker build -t ghcr.io/daaniigomez29/reserveat-api:1.0.0 .
+    run: docker build -t ghcr.io/daaniigomez29/reserveat-api:${{ github.sha }} -t ghcr.io/daaniigomez29/reserveat-api:latest .
 
   - name: Push Dockerfile image
-    run: docker push ghcr.io/daaniigomez29/reserveat-api:1.0.0
+    run: | 
+     docker push ghcr.io/daaniigomez29/reserveat-api:${{ github.sha }}
+     docker push ghcr.io/daaniigomez29/reserveat-api:latest
     
 
 
