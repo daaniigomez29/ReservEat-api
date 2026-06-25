@@ -21,7 +21,7 @@ import com.restaurant.infrastructure.persistence.repository.JpaAuthUserRepositor
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
-public class AuthUserRepositoryIntegrationTest {
+public class AuthUserRepositoryIT {
 
     @Container
     @ServiceConnection
