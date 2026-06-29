@@ -37,3 +37,6 @@ build/
 
 ### Resources ###
 src/main/resources/application-dev.yml
+
+### Docker compose dev ###
+docker-compose.dev.yml
