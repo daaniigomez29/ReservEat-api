@@ -29,7 +29,7 @@ public class RestaurantTableController {
             @Valid @RequestBody CreateTableRequest request,
             @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(tableUseCase.create(restaurantId, request, user.getId().value()));
+                .body(tableUseCase.create(restaurantId, request, user));
     }
 
     @GetMapping
@@ -37,7 +37,7 @@ public class RestaurantTableController {
     public ResponseEntity<List<RestaurantTableResponse>> list(
             @PathVariable Long restaurantId,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(tableUseCase.listByRestaurant(restaurantId, user.getId().value()));
+        return ResponseEntity.ok(tableUseCase.listByRestaurant(restaurantId, user));
     }
 
     @GetMapping("/{tableId}")
@@ -46,7 +46,7 @@ public class RestaurantTableController {
             @PathVariable Long restaurantId,
             @PathVariable Long tableId,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(tableUseCase.getById(restaurantId, tableId, user.getId().value()));
+        return ResponseEntity.ok(tableUseCase.getById(restaurantId, tableId, user));
     }
 
     @PutMapping("/{tableId}")
@@ -56,7 +56,7 @@ public class RestaurantTableController {
             @PathVariable Long tableId,
             @Valid @RequestBody UpdateTableRequest request,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(tableUseCase.update(restaurantId, tableId, request, user.getId().value()));
+        return ResponseEntity.ok(tableUseCase.update(restaurantId, tableId, request, user));
     }
 
     @DeleteMapping("/{tableId}")
@@ -65,7 +65,7 @@ public class RestaurantTableController {
             @PathVariable Long restaurantId,
             @PathVariable Long tableId,
             @AuthenticationPrincipal AuthUser user) {
-        tableUseCase.delete(restaurantId, tableId, user.getId().value());
+        tableUseCase.delete(restaurantId, tableId, user);
         return ResponseEntity.noContent().build();
     }
 }

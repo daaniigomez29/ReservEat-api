@@ -7,10 +7,9 @@ import com.restaurant.application.port.in.RestaurantTableUseCase;
 import com.restaurant.domain.exception.DomainException;
 import com.restaurant.domain.exception.RestaurantNotFoundException;
 import com.restaurant.domain.exception.TableNotFoundException;
-import com.restaurant.domain.model.GlobalRole;
+import com.restaurant.domain.model.AuthUser;
 import com.restaurant.domain.model.Restaurant;
 import com.restaurant.domain.model.RestaurantTable;
-import com.restaurant.domain.repository.AuthUserRepository;
 import com.restaurant.domain.repository.RestaurantRepository;
 import com.restaurant.domain.repository.RestaurantTableRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +27,13 @@ public class RestaurantTableService implements RestaurantTableUseCase {
 
     private final RestaurantTableRepository tableRepository;
     private final RestaurantRepository restaurantRepository;
-    private final AuthUserRepository userRepository;
 
     @Override
     @Transactional
-    public RestaurantTableResponse create(Long restaurantId, CreateTableRequest request, Long requesterId) {
+    public RestaurantTableResponse create(Long restaurantId, CreateTableRequest request, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         if (tableRepository.existsByRestaurantIdAndLabel(restaurantId, request.getLabel())) {
             throw new DomainException("A table with label '" + request.getLabel() + "' already exists");
@@ -64,10 +62,10 @@ public class RestaurantTableService implements RestaurantTableUseCase {
 
     @Override
     @Transactional
-    public RestaurantTableResponse update(Long restaurantId, Long tableId, UpdateTableRequest request, Long requesterId) {
+    public RestaurantTableResponse update(Long restaurantId, Long tableId, UpdateTableRequest request, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new TableNotFoundException(tableId));
@@ -95,10 +93,10 @@ public class RestaurantTableService implements RestaurantTableUseCase {
 
     @Override
     @Transactional
-    public void delete(Long restaurantId, Long tableId, Long requesterId) {
+    public void delete(Long restaurantId, Long tableId, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new TableNotFoundException(tableId));
@@ -112,10 +110,10 @@ public class RestaurantTableService implements RestaurantTableUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RestaurantTableResponse> listByRestaurant(Long restaurantId, Long requesterId) {
+    public List<RestaurantTableResponse> listByRestaurant(Long restaurantId, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         return tableRepository.findByRestaurantId(restaurantId).stream()
                 .map(this::toResponse)
@@ -124,10 +122,10 @@ public class RestaurantTableService implements RestaurantTableUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public RestaurantTableResponse getById(Long restaurantId, Long tableId, Long requesterId) {
+    public RestaurantTableResponse getById(Long restaurantId, Long tableId, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new TableNotFoundException(tableId));
@@ -135,12 +133,8 @@ public class RestaurantTableService implements RestaurantTableUseCase {
         return toResponse(table);
     }
 
-    private void assertRestaurantManager(Restaurant restaurant, Long requesterId) {
-        var user = userRepository.findById(requesterId)
-                .orElseThrow(() -> new DomainException("Requester not found"));
-        boolean isAdmin = GlobalRole.ADMIN.equals(user.getGlobalRole());
-        boolean isOwner = requesterId.equals(restaurant.getOwnerId());
-        if (!isAdmin && !isOwner) {
+    private void assertRestaurantManager(Restaurant restaurant, AuthUser requester) {
+        if (!restaurant.isOwnerOrAdmin(requester)) {
             throw new DomainException("Only the restaurant owner or admin can manage tables");
         }
     }

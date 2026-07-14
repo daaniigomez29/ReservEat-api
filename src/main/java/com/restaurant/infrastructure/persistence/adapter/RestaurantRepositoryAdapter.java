@@ -10,6 +10,10 @@ import com.restaurant.infrastructure.persistence.entity.RestaurantEntity;
 import com.restaurant.infrastructure.persistence.repository.JpaMenuRepository;
 import com.restaurant.infrastructure.persistence.repository.JpaRestaurantRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -77,11 +81,17 @@ public class RestaurantRepositoryAdapter implements RestaurantRepository {
     }
 
     @Override
-    public List<Restaurant> search(String name, String city, String province,
+    public Page<Restaurant> search(String name, String city, String province,
                                    CuisineType cuisineType, DietaryOption dietaryOption,
-                                   BigDecimal maxPrice) {
-        return jpa.search(name, city, province, cuisineType, dietaryOption, maxPrice)
-                .stream().map(this::toDomain).collect(Collectors.toList());
+                                   BigDecimal maxPrice, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return jpa.search(name, city, province, cuisineType, dietaryOption, maxPrice, pageable)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public List<Restaurant> getOwnerRestaurants(Long ownerId) {
+        return jpa.findByOwnerId(ownerId).stream().map(this::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -115,6 +125,8 @@ public class RestaurantRepositoryAdapter implements RestaurantRepository {
                 .size(r.getSize())
                 .averagePrice(r.getAveragePrice())
                 .cuisineType(r.getCuisineType())
+                .openingTime(r.getOpeningTime())
+                .closingTime(r.getClosingTime())
                 .dietaryOptions(r.getDietaryOptions())
                 .street(r.getLocation() != null ? r.getLocation().getStreet() : null)
                 .city(r.getLocation() != null ? r.getLocation().getCity() : null)
@@ -149,6 +161,8 @@ public class RestaurantRepositoryAdapter implements RestaurantRepository {
                 .size(e.getSize())
                 .averagePrice(e.getAveragePrice())
                 .cuisineType(e.getCuisineType())
+                .openingTime(e.getOpeningTime())
+                .closingTime(e.getClosingTime())
                 .dietaryOptions(e.getDietaryOptions())
                 .location(location)
                 .menuIds(menuIds)

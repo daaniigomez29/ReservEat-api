@@ -6,12 +6,11 @@ import com.restaurant.application.dto.response.TableStatus;
 import com.restaurant.application.port.in.FloorPlanUseCase;
 import com.restaurant.domain.exception.DomainException;
 import com.restaurant.domain.exception.RestaurantNotFoundException;
-import com.restaurant.domain.model.GlobalRole;
+import com.restaurant.domain.model.AuthUser;
 import com.restaurant.domain.model.Reservation;
 import com.restaurant.domain.model.ReservationStatus;
 import com.restaurant.domain.model.Restaurant;
 import com.restaurant.domain.model.RestaurantTable;
-import com.restaurant.domain.repository.AuthUserRepository;
 import com.restaurant.domain.repository.ReservationRepository;
 import com.restaurant.domain.repository.RestaurantRepository;
 import com.restaurant.domain.repository.RestaurantTableRepository;
@@ -32,14 +31,14 @@ public class FloorPlanService implements FloorPlanUseCase {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantTableRepository tableRepository;
     private final ReservationRepository reservationRepository;
-    private final AuthUserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public FloorPlanResponse getFloorPlan(Long restaurantId, LocalDateTime at, Long requesterId) {
+    public FloorPlanResponse getFloorPlan(Long restaurantId, LocalDateTime at, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+                
+        assertRestaurantManager(restaurant, requester);
 
         LocalDateTime instant = at != null ? at : LocalDateTime.now();
 
@@ -104,12 +103,8 @@ public class FloorPlanService implements FloorPlanUseCase {
         };
     }
 
-    private void assertRestaurantManager(Restaurant restaurant, Long requesterId) {
-        var user = userRepository.findById(requesterId)
-                .orElseThrow(() -> new DomainException("Requester not found"));
-        boolean isAdmin = GlobalRole.ADMIN.equals(user.getGlobalRole());
-        boolean isOwner = requesterId.equals(restaurant.getOwnerId());
-        if (!isAdmin && !isOwner) {
+    private void assertRestaurantManager(Restaurant restaurant, AuthUser requester) {
+        if (!restaurant.isOwnerOrAdmin(requester)) {
             throw new DomainException("Only the restaurant owner or admin can view the floor plan");
         }
     }

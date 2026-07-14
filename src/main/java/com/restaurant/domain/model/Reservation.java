@@ -32,6 +32,15 @@ public class Reservation {
     // Default reservation window is 2 hours
     public static final int DEFAULT_DURATION_HOURS = 2;
 
+    /**
+     * Whether the given user may see/act on this reservation: either a global
+     * admin or the user who booked it.
+     */
+    public boolean isAccessibleBy(AuthUser user) {
+        return user != null
+                && (user.isAdmin() || user.getId().value().equals(this.userId));
+    }
+
     public boolean isActive() {
         return ReservationStatus.CONFIRMED.equals(this.status)
                 || ReservationStatus.SEATED.equals(this.status);

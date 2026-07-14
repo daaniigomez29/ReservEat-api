@@ -8,6 +8,8 @@ import com.restaurant.domain.model.CuisineType;
 import com.restaurant.domain.model.DietaryOption;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,15 +44,23 @@ public class RestaurantController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<RestaurantResponse>> search(
+    public ResponseEntity<Page<RestaurantResponse>> search(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String province,
             @RequestParam(required = false) CuisineType cuisineType,
             @RequestParam(required = false) DietaryOption dietaryOption,
-            @RequestParam(required = false) BigDecimal maxPrice) {
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int size) {
         return ResponseEntity.ok(restaurantUseCase.searchRestaurants(
-                name, city, province, cuisineType, dietaryOption, maxPrice));
+                name, city, province, cuisineType, dietaryOption, maxPrice, page, size));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<RestaurantResponse>> getOwnerRestaurants(
+            @AuthenticationPrincipal AuthUser user) {
+        return ResponseEntity.ok(restaurantUseCase.getOwnerRestaurants(user.getId().value()));
     }
 
     @PutMapping("/{id}")
@@ -58,14 +68,14 @@ public class RestaurantController {
             @PathVariable Long id,
             @Valid @RequestBody CreateRestaurantRequest request,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(restaurantUseCase.updateRestaurant(id, request, user.getId().value()));
+        return ResponseEntity.ok(restaurantUseCase.updateRestaurant(id, request, user));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUser user) {
-        restaurantUseCase.deleteRestaurant(id, user.getId().value());
+        restaurantUseCase.deleteRestaurant(id, user);
         return ResponseEntity.noContent().build();
     }
 }

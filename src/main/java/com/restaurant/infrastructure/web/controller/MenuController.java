@@ -26,7 +26,7 @@ public class MenuController {
             @PathVariable Long restaurantId,
             @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(menuUseCase.createMenu(restaurantId, user.getId().value()));
+                .body(menuUseCase.createMenu(restaurantId, user));
     }
 
     @GetMapping("/restaurant/{restaurantId}")
@@ -39,7 +39,7 @@ public class MenuController {
             @Valid @RequestBody CreateMenuCategoryRequest request,
             @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(menuUseCase.addCategory(request, user.getId().value()));
+                .body(menuUseCase.addCategory(request, user));
     }
 
     @PostMapping("/items")
@@ -47,14 +47,14 @@ public class MenuController {
             @Valid @RequestBody CreateMenuItemRequest request,
             @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(menuUseCase.addMenuItem(request, user.getId().value()));
+                .body(menuUseCase.addMenuItem(request, user));
     }
 
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<Void> deleteMenuItem(
             @PathVariable Long itemId,
             @AuthenticationPrincipal AuthUser user) {
-        menuUseCase.deleteMenuItem(itemId, user.getId().value());
+        menuUseCase.deleteMenuItem(itemId, user);
         return ResponseEntity.noContent().build();
     }
 
@@ -62,7 +62,7 @@ public class MenuController {
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal AuthUser user) {
-        menuUseCase.deleteCategory(categoryId, user.getId().value());
+        menuUseCase.deleteCategory(categoryId, user);
         return ResponseEntity.noContent().build();
     }
 }

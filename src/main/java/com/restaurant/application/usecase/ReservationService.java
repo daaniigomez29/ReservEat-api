@@ -10,12 +10,11 @@ import com.restaurant.domain.exception.ReservationConflictException;
 import com.restaurant.domain.exception.ReservationNotFoundException;
 import com.restaurant.domain.exception.RestaurantNotFoundException;
 import com.restaurant.domain.exception.TableNotFoundException;
-import com.restaurant.domain.model.GlobalRole;
+import com.restaurant.domain.model.AuthUser;
 import com.restaurant.domain.model.Reservation;
 import com.restaurant.domain.model.ReservationStatus;
 import com.restaurant.domain.model.Restaurant;
 import com.restaurant.domain.model.RestaurantTable;
-import com.restaurant.domain.repository.AuthUserRepository;
 import com.restaurant.domain.repository.ReservationRepository;
 import com.restaurant.domain.repository.RestaurantRepository;
 import com.restaurant.domain.repository.RestaurantTableRepository;
@@ -42,7 +41,6 @@ public class ReservationService implements ReservationUseCase {
     private final ReservationRepository reservationRepository;
     private final RestaurantRepository restaurantRepository;
     private final RestaurantTableRepository tableRepository;
-    private final AuthUserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Value("${reservation.turnover-buffer-minutes:30}")
@@ -63,6 +61,12 @@ public class ReservationService implements ReservationUseCase {
 
         LocalDateTime start = request.getStartDate();
         LocalDateTime end = start.plusHours(Reservation.DEFAULT_DURATION_HOURS);
+
+        if (!restaurant.isWithinOpeningHours(start.toLocalTime())) {
+            throw new DomainException(String.format(
+                    "The restaurant only accepts reservations between %s and %s",
+                    restaurant.getOpeningTime(), restaurant.getClosingTime()));
+        }
 
         // Idempotency: an accidental double-submit (double-click / network retry) by the
         // same user for the same slot, seen within the dedup window, returns the existing
@@ -133,10 +137,10 @@ public class ReservationService implements ReservationUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public ReservationResponse getReservationById(Long id, Long requesterId) {
+    public ReservationResponse getReservationById(Long id, AuthUser requester) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
-        assertCanAccess(reservation, requesterId);
+        assertCanAccess(reservation, requester);
         Restaurant restaurant = restaurantRepository.findById(reservation.getRestaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(reservation.getRestaurantId()));
         return toResponse(reservation, restaurant.getName());
@@ -162,10 +166,10 @@ public class ReservationService implements ReservationUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReservationResponse> getReservationsByRestaurant(Long restaurantId, Long requesterId) {
+    public List<ReservationResponse> getReservationsByRestaurant(Long restaurantId, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         Map<Long, String> tableLabels = tableRepository.findByRestaurantId(restaurantId).stream()
                 .collect(Collectors.toMap(RestaurantTable::getId, RestaurantTable::getLabel));
@@ -177,11 +181,11 @@ public class ReservationService implements ReservationUseCase {
 
     @Override
     @Transactional
-    public ReservationResponse cancelReservation(Long id, Long requesterId) {
+    public ReservationResponse cancelReservation(Long id, AuthUser requester) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
 
-        assertCanAccess(reservation, requesterId);
+        assertCanAccess(reservation, requester);
         reservation.cancel();
         Reservation saved = reservationRepository.save(reservation);
 
@@ -195,14 +199,14 @@ public class ReservationService implements ReservationUseCase {
 
     @Override
     @Transactional
-    public ReservationResponse assignTable(Long id, Long newTableId, Long requesterId) {
+    public ReservationResponse assignTable(Long id, Long newTableId, AuthUser requester) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
 
         // Same pessimistic lock as creation to serialize table assignment.
         Restaurant restaurant = restaurantRepository.findByIdUpdate(reservation.getRestaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(reservation.getRestaurantId()));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         RestaurantTable target = tableRepository.findById(newTableId)
                 .orElseThrow(() -> new TableNotFoundException(newTableId));
@@ -223,35 +227,35 @@ public class ReservationService implements ReservationUseCase {
 
         reservation.setTableId(newTableId);
         Reservation saved = reservationRepository.save(reservation);
-        log.info("Reservation {} reassigned to table {} by user {}", id, newTableId, requesterId);
+        log.info("Reservation {} reassigned to table {} by user {}", id, newTableId, requester.getId().value());
         return toOwnerResponse(saved, restaurant.getName(), target.getLabel());
     }
 
     @Override
     @Transactional
-    public ReservationResponse seatReservation(Long id, Long requesterId) {
-        return applyOwnerTransition(id, requesterId, Reservation::seat);
+    public ReservationResponse seatReservation(Long id, AuthUser requester) {
+        return applyOwnerTransition(id, requester, Reservation::seat);
     }
 
     @Override
     @Transactional
-    public ReservationResponse completeReservation(Long id, Long requesterId) {
-        return applyOwnerTransition(id, requesterId, Reservation::complete);
+    public ReservationResponse completeReservation(Long id, AuthUser requester) {
+        return applyOwnerTransition(id, requester, Reservation::complete);
     }
 
     @Override
     @Transactional
-    public ReservationResponse markNoShow(Long id, Long requesterId) {
-        return applyOwnerTransition(id, requesterId, Reservation::markNoShow);
+    public ReservationResponse markNoShow(Long id, AuthUser requester) {
+        return applyOwnerTransition(id, requester, Reservation::markNoShow);
     }
 
-    private ReservationResponse applyOwnerTransition(Long id, Long requesterId,
+    private ReservationResponse applyOwnerTransition(Long id, AuthUser requester,
                                                      java.util.function.Consumer<Reservation> transition) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ReservationNotFoundException(id));
         Restaurant restaurant = restaurantRepository.findById(reservation.getRestaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(reservation.getRestaurantId()));
-        assertRestaurantManager(restaurant, requesterId);
+        assertRestaurantManager(restaurant, requester);
 
         transition.accept(reservation);
         Reservation saved = reservationRepository.save(reservation);
@@ -262,22 +266,14 @@ public class ReservationService implements ReservationUseCase {
         return toOwnerResponse(saved, restaurant.getName(), tableLabel);
     }
 
-    private void assertCanAccess(Reservation reservation, Long requesterId) {
-        var user = userRepository.findById(requesterId)
-                .orElseThrow(() -> new DomainException("Requester not found"));
-        boolean isAdmin = GlobalRole.ADMIN.equals(user.getGlobalRole());
-        boolean isReservationOwner = requesterId.equals(reservation.getUserId());
-        if (!isAdmin && !isReservationOwner) {
+    private void assertCanAccess(Reservation reservation, AuthUser requester) {
+        if (!reservation.isAccessibleBy(requester)) {
             throw new DomainException("Access denied to this reservation");
         }
     }
 
-    private void assertRestaurantManager(Restaurant restaurant, Long requesterId) {
-        var user = userRepository.findById(requesterId)
-                .orElseThrow(() -> new DomainException("Requester not found"));
-        boolean isAdmin = GlobalRole.ADMIN.equals(user.getGlobalRole());
-        boolean isRestaurantOwner = requesterId.equals(restaurant.getOwnerId());
-        if (!isAdmin && !isRestaurantOwner) {
+    private void assertRestaurantManager(Restaurant restaurant, AuthUser requester) {
+        if (!restaurant.isOwnerOrAdmin(requester)) {
             throw new DomainException("Only the restaurant owner or admin can perform this action");
         }
     }

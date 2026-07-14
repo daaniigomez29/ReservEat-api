@@ -1,5 +1,6 @@
 package com.restaurant.application.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.restaurant.domain.model.CuisineType;
 import com.restaurant.domain.model.DietaryOption;
 import jakarta.validation.constraints.*;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.Set;
 
 @Getter
@@ -37,6 +39,14 @@ public class CreateRestaurantRequest {
 
     @NotNull
     private CuisineType cuisineType;
+
+    // Opening hours (24h). Reservations are only accepted within this window.
+    // Optional so existing restaurants without hours keep working.
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime openingTime;
+
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime closingTime;
 
     private Set<DietaryOption> dietaryOptions;
 

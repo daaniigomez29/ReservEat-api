@@ -31,6 +31,6 @@ public class FloorPlanController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime at,
             @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.ok(
-                floorPlanUseCase.getFloorPlan(restaurantId, at, user.getId().value()));
+                floorPlanUseCase.getFloorPlan(restaurantId, at, user));
     }
 }

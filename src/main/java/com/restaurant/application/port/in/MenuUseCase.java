@@ -5,18 +5,19 @@ import com.restaurant.application.dto.request.CreateMenuItemRequest;
 import com.restaurant.application.dto.response.MenuCategoryResponse;
 import com.restaurant.application.dto.response.MenuItemResponse;
 import com.restaurant.application.dto.response.MenuResponse;
+import com.restaurant.domain.model.AuthUser;
 
 public interface MenuUseCase {
 
-    MenuResponse createMenu(Long restaurantId, Long requesterId);
+    MenuResponse createMenu(Long restaurantId, AuthUser requester);
 
     MenuResponse getMenuByRestaurant(Long restaurantId);
 
-    MenuCategoryResponse addCategory(CreateMenuCategoryRequest request, Long requesterId);
+    MenuCategoryResponse addCategory(CreateMenuCategoryRequest request, AuthUser requester);
 
-    MenuItemResponse addMenuItem(CreateMenuItemRequest request, Long requesterId);
+    MenuItemResponse addMenuItem(CreateMenuItemRequest request, AuthUser requester);
 
-    void deleteMenuItem(Long itemId, Long requesterId);
+    void deleteMenuItem(Long itemId, AuthUser requester);
 
-    void deleteCategory(Long categoryId, Long requesterId);
+    void deleteCategory(Long categoryId, AuthUser requester);
 }

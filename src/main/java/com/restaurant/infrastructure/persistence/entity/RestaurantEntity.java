@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +41,12 @@ public class RestaurantEntity {
 
     @Enumerated(EnumType.STRING)
     private CuisineType cuisineType;
+
+    @Column(name = "opening_time")
+    private LocalTime openingTime;
+
+    @Column(name = "closing_time")
+    private LocalTime closingTime;
 
     @OneToMany(mappedBy = "restaurantEntity")
     private List<MenuEntity> menuEntityList;

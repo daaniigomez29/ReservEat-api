@@ -28,14 +28,13 @@ public class MenuService implements MenuUseCase {
     private final MenuCategoryRepository menuCategoryRepository;
     private final MenuItemRepository menuItemRepository;
     private final RestaurantRepository restaurantRepository;
-    private final AuthUserRepository userRepository;
 
     @Override
     @Transactional
-    public MenuResponse createMenu(Long restaurantId, Long requesterId) {
+    public MenuResponse createMenu(Long restaurantId, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException(restaurantId));
-        assertOwnerOrAdmin(restaurant, requesterId);
+        assertOwnerOrAdmin(restaurant, requester);
 
         Menu menu = Menu.builder()
                 .restaurantId(restaurantId)
@@ -66,13 +65,13 @@ public class MenuService implements MenuUseCase {
 
     @Override
     @Transactional
-    public MenuCategoryResponse addCategory(CreateMenuCategoryRequest request, Long requesterId) {
+    public MenuCategoryResponse addCategory(CreateMenuCategoryRequest request, AuthUser requester) {
         Menu menu = menuRepository.findById(request.getMenuId())
                 .orElseThrow(() -> new DomainException("Menu not found: " + request.getMenuId()));
 
         Restaurant restaurant = restaurantRepository.findById(menu.getRestaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(menu.getRestaurantId()));
-        assertOwnerOrAdmin(restaurant, requesterId);
+        assertOwnerOrAdmin(restaurant, requester);
 
         MenuCategory category = MenuCategory.builder()
                 .name(request.getName())
@@ -85,7 +84,7 @@ public class MenuService implements MenuUseCase {
 
     @Override
     @Transactional
-    public MenuItemResponse addMenuItem(CreateMenuItemRequest request, Long requesterId) {
+    public MenuItemResponse addMenuItem(CreateMenuItemRequest request, AuthUser requester) {
         MenuCategory category = menuCategoryRepository.findById(request.getMenuCategoryId())
                 .orElseThrow(() -> new DomainException("Menu category not found: " + request.getMenuCategoryId()));
 
@@ -94,7 +93,7 @@ public class MenuService implements MenuUseCase {
 
         Restaurant restaurant = restaurantRepository.findById(menu.getRestaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(menu.getRestaurantId()));
-        assertOwnerOrAdmin(restaurant, requesterId);
+        assertOwnerOrAdmin(restaurant, requester);
 
         MenuItem item = MenuItem.builder()
                 .name(request.getName())
@@ -110,7 +109,7 @@ public class MenuService implements MenuUseCase {
 
     @Override
     @Transactional
-    public void deleteMenuItem(Long itemId, Long requesterId) {
+    public void deleteMenuItem(Long itemId, AuthUser requester) {
         MenuItem item = menuItemRepository.findById(itemId)
                 .orElseThrow(() -> new DomainException("Menu item not found: " + itemId));
         menuItemRepository.deleteById(itemId);
@@ -118,18 +117,14 @@ public class MenuService implements MenuUseCase {
 
     @Override
     @Transactional
-    public void deleteCategory(Long categoryId, Long requesterId) {
+    public void deleteCategory(Long categoryId, AuthUser requester) {
         menuCategoryRepository.findById(categoryId)
                 .orElseThrow(() -> new DomainException("Menu category not found: " + categoryId));
         menuCategoryRepository.deleteById(categoryId);
     }
 
-    private void assertOwnerOrAdmin(Restaurant restaurant, Long requesterId) {
-        var user = userRepository.findById(requesterId)
-                .orElseThrow(() -> new DomainException("Requester not found"));
-        boolean isAdmin = GlobalRole.ADMIN.equals(user.getGlobalRole());
-        boolean isOwner = requesterId.equals(restaurant.getOwnerId());
-        if (!isAdmin && !isOwner) {
+    private void assertOwnerOrAdmin(Restaurant restaurant, AuthUser requester) {
+        if (!restaurant.isOwnerOrAdmin(requester)) {
             throw new DomainException("You do not have permission to manage this menu");
         }
     }

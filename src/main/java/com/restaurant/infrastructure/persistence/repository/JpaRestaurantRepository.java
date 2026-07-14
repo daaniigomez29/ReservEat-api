@@ -4,6 +4,9 @@ import com.restaurant.domain.model.CuisineType;
 import com.restaurant.domain.model.DietaryOption;
 import com.restaurant.infrastructure.persistence.entity.RestaurantEntity;
 import jakarta.persistence.LockModeType;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -41,10 +44,13 @@ public interface JpaRestaurantRepository extends JpaRepository<RestaurantEntity,
               AND (:dietaryOption IS NULL OR d = :dietaryOption)
               AND (:maxPrice IS NULL OR r.averagePrice <= :maxPrice)
             """)
-    List<RestaurantEntity> search(@Param("name") String name,
+    Page<RestaurantEntity> search(@Param("name") String name,
                                   @Param("city") String city,
                                   @Param("province") String province,
                                   @Param("cuisineType") CuisineType cuisineType,
                                   @Param("dietaryOption") DietaryOption dietaryOption,
-                                  @Param("maxPrice") BigDecimal maxPrice);
+                                  @Param("maxPrice") BigDecimal maxPrice,
+                                  Pageable pageable);
+
+    List<RestaurantEntity> findByOwnerId(Long ownerId);
 }

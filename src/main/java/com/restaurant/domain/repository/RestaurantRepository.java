@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+
 public interface RestaurantRepository {
 
     Restaurant save(Restaurant restaurant);
@@ -30,11 +32,13 @@ public interface RestaurantRepository {
 
     List<Restaurant> findByAveragePriceLessThanEqual(BigDecimal maxPrice);
 
-    List<Restaurant> search(String name, String city, String province,
+    Page<Restaurant> search(String name, String city, String province,
                             CuisineType cuisineType, DietaryOption dietaryOption,
-                            BigDecimal maxPrice);
+                            BigDecimal maxPrice, int page, int size);
 
     List<Restaurant> findAllByIdIn(List<Long> ids);
+
+    List<Restaurant> getOwnerRestaurants(Long ownerId);
 
     boolean existsByEmail(String email);
 

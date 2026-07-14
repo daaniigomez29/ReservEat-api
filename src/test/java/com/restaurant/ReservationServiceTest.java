@@ -174,7 +174,7 @@ class ReservationServiceTest {
                 AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build()));
         when(reservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        var response = reservationService.seatReservation(5L, 99L); // 99 = restaurant owner
+        var response = reservationService.seatReservation(5L, AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build());
 
         assertThat(response.getStatus()).isEqualTo(ReservationStatus.SEATED);
     }
@@ -198,7 +198,7 @@ class ReservationServiceTest {
                 .thenReturn(Set.of());
         when(reservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        var response = reservationService.assignTable(5L, 11L, 99L);
+        var response = reservationService.assignTable(5L, 11L, AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build());
 
         assertThat(response.getTableId()).isEqualTo(11L);
         assertThat(response.getTableLabel()).isEqualTo("M11");

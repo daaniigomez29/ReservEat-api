@@ -34,7 +34,7 @@ public class ReservationController {
     public ResponseEntity<ReservationResponse> getById(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(reservationUseCase.getReservationById(id, user.getId().value()));
+        return ResponseEntity.ok(reservationUseCase.getReservationById(id, user));
     }
 
     @GetMapping("/my")
@@ -49,14 +49,14 @@ public class ReservationController {
     public ResponseEntity<List<ReservationResponse>> byRestaurant(
             @PathVariable Long restaurantId,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(reservationUseCase.getReservationsByRestaurant(restaurantId, user.getId().value()));
+        return ResponseEntity.ok(reservationUseCase.getReservationsByRestaurant(restaurantId, user));
     }
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<ReservationResponse> cancel(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(reservationUseCase.cancelReservation(id, user.getId().value()));
+        return ResponseEntity.ok(reservationUseCase.cancelReservation(id, user));
     }
 
     // --- Owner/admin operations ---
@@ -67,27 +67,27 @@ public class ReservationController {
             @Valid @RequestBody AssignTableRequest request,
             @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.ok(
-                reservationUseCase.assignTable(id, request.getTableId(), user.getId().value()));
+                reservationUseCase.assignTable(id, request.getTableId(), user));
     }
 
     @PatchMapping("/{id}/seat")
     public ResponseEntity<ReservationResponse> seat(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(reservationUseCase.seatReservation(id, user.getId().value()));
+        return ResponseEntity.ok(reservationUseCase.seatReservation(id, user));
     }
 
     @PatchMapping("/{id}/complete")
     public ResponseEntity<ReservationResponse> complete(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(reservationUseCase.completeReservation(id, user.getId().value()));
+        return ResponseEntity.ok(reservationUseCase.completeReservation(id, user));
     }
 
     @PatchMapping("/{id}/no-show")
     public ResponseEntity<ReservationResponse> noShow(
             @PathVariable Long id,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(reservationUseCase.markNoShow(id, user.getId().value()));
+        return ResponseEntity.ok(reservationUseCase.markNoShow(id, user));
     }
 }

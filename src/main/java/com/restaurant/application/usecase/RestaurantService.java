@@ -6,15 +6,16 @@ import com.restaurant.application.dto.response.RestaurantResponse;
 import com.restaurant.application.port.in.RestaurantUseCase;
 import com.restaurant.domain.exception.DomainException;
 import com.restaurant.domain.exception.RestaurantNotFoundException;
+import com.restaurant.domain.model.AuthUser;
 import com.restaurant.domain.model.CuisineType;
 import com.restaurant.domain.model.DietaryOption;
-import com.restaurant.domain.model.GlobalRole;
 import com.restaurant.domain.model.Restaurant;
-import com.restaurant.domain.repository.AuthUserRepository;
 import com.restaurant.domain.repository.RestaurantRepository;
 import com.restaurant.domain.valueobject.Location;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 public class RestaurantService implements RestaurantUseCase {
 
     private final RestaurantRepository restaurantRepository;
-    private final AuthUserRepository userRepository;
 
     @Override
     @Transactional
@@ -50,6 +50,8 @@ public class RestaurantService implements RestaurantUseCase {
                 .size(request.getSize())
                 .averagePrice(request.getAveragePrice())
                 .cuisineType(request.getCuisineType())
+                .openingTime(request.getOpeningTime())
+                .closingTime(request.getClosingTime())
                 .dietaryOptions(request.getDietaryOptions())
                 .location(location)
                 .ownerId(ownerId)
@@ -78,23 +80,29 @@ public class RestaurantService implements RestaurantUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RestaurantResponse> searchRestaurants(String name, String city, String province,
+    public Page<RestaurantResponse> searchRestaurants(String name, String city, String province,
                                                       CuisineType cuisineType,
                                                       DietaryOption dietaryOption,
-                                                      BigDecimal maxPrice) {
-        return restaurantRepository.search(name, city, province, cuisineType, dietaryOption, maxPrice)
-                .stream()
+                                                      BigDecimal maxPrice, int page, int size) {
+        Page<Restaurant> restaurants = restaurantRepository.search(name, city, province, cuisineType, dietaryOption, maxPrice, page, size);
+        return restaurants.map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RestaurantResponse> getOwnerRestaurants(Long ownerId) {
+        return restaurantRepository.getOwnerRestaurants(ownerId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public RestaurantResponse updateRestaurant(Long id, CreateRestaurantRequest request, Long requesterId) {
+    public RestaurantResponse updateRestaurant(Long id, CreateRestaurantRequest request, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantNotFoundException(id));
 
-        assertOwnerOrAdmin(restaurant, requesterId);
+        assertOwnerOrAdmin(restaurant, requester);
 
         restaurant.setName(request.getName());
         restaurant.setEmail(request.getEmail());
@@ -102,6 +110,8 @@ public class RestaurantService implements RestaurantUseCase {
         restaurant.setSize(request.getSize());
         restaurant.setAveragePrice(request.getAveragePrice());
         restaurant.setCuisineType(request.getCuisineType());
+        restaurant.setOpeningTime(request.getOpeningTime());
+        restaurant.setClosingTime(request.getClosingTime());
         restaurant.setDietaryOptions(request.getDietaryOptions());
         restaurant.setLocation(Location.builder()
                 .street(request.getStreet())
@@ -117,20 +127,16 @@ public class RestaurantService implements RestaurantUseCase {
 
     @Override
     @Transactional
-    public void deleteRestaurant(Long id, Long requesterId) {
+    public void deleteRestaurant(Long id, AuthUser requester) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantNotFoundException(id));
-        assertOwnerOrAdmin(restaurant, requesterId);
+        assertOwnerOrAdmin(restaurant, requester);
         restaurantRepository.deleteById(id);
-        log.info("Restaurant {} deleted by user {}", id, requesterId);
+        log.info("Restaurant {} deleted by user {}", id, requester.getId().value());
     }
 
-    private void assertOwnerOrAdmin(Restaurant restaurant, Long requesterId) {
-        var user = userRepository.findById(requesterId)
-                .orElseThrow(() -> new DomainException("Requester not found"));
-        boolean isAdmin = GlobalRole.ADMIN.equals(user.getGlobalRole());
-        boolean isOwner = requesterId.equals(restaurant.getOwnerId());
-        if (!isAdmin && !isOwner) {
+    private void assertOwnerOrAdmin(Restaurant restaurant, AuthUser requester) {
+        if (!restaurant.isOwnerOrAdmin(requester)) {
             throw new DomainException("You do not have permission to modify this restaurant");
         }
     }
@@ -156,6 +162,8 @@ public class RestaurantService implements RestaurantUseCase {
                 .size(r.getSize())
                 .averagePrice(r.getAveragePrice())
                 .cuisineType(r.getCuisineType())
+                .openingTime(r.getOpeningTime())
+                .closingTime(r.getClosingTime())
                 .dietaryOptions(r.getDietaryOptions())
                 .location(locationResponse)
                 .menuIds(r.getMenuIds())
