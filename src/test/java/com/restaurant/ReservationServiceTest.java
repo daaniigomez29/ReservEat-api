@@ -170,8 +170,6 @@ class ReservationServiceTest {
 
         when(reservationRepository.findById(5L)).thenReturn(Optional.of(reservation));
         when(restaurantRepository.findById(1L)).thenReturn(Optional.of(restaurant));
-        when(userRepository.findById(99L)).thenReturn(Optional.of(
-                AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build()));
         when(reservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var response = reservationService.seatReservation(5L, AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build());
@@ -191,8 +189,6 @@ class ReservationServiceTest {
 
         when(reservationRepository.findById(5L)).thenReturn(Optional.of(reservation));
         when(restaurantRepository.findByIdUpdate(1L)).thenReturn(Optional.of(restaurant));
-        when(userRepository.findById(99L)).thenReturn(Optional.of(
-                AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build()));
         when(tableRepository.findById(11L)).thenReturn(Optional.of(table(11L, 4)));
         when(reservationRepository.findOccupiedTableIdsExcluding(eq(1L), any(), any(), eq(5L)))
                 .thenReturn(Set.of());
