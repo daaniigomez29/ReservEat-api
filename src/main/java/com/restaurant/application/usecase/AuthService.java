@@ -13,7 +13,10 @@ import com.restaurant.domain.exception.UserNotFoundException;
 import com.restaurant.domain.exception.UsernameAlreadyExistsException;
 import com.restaurant.domain.model.AuthUser;
 import com.restaurant.domain.model.GlobalRole;
+import com.restaurant.domain.model.RefreshToken;
 import com.restaurant.domain.repository.AuthUserRepository;
+import com.restaurant.domain.repository.RefreshTokenRepository;
+import com.restaurant.infrastructure.security.RefreshTokenHasher;
 import com.restaurant.infrastructure.security.google.GoogleIdTokenClaims;
 import com.restaurant.infrastructure.security.google.GoogleIdTokenService;
 import com.restaurant.infrastructure.security.jwt.JwtService;
@@ -27,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -40,6 +44,8 @@ public class AuthService implements AuthUseCase {
     private final AuthenticationManager authenticationManager;
     private final GoogleIdTokenService googleIdTokenService;
     private final EmailVerificationUseCase emailVerificationUseCase;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenHasher refreshTokenHasher;
 
     @Override
     @Transactional
@@ -82,6 +88,7 @@ public class AuthService implements AuthUseCase {
     }
 
     @Override
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -95,11 +102,8 @@ public class AuthService implements AuthUseCase {
             throw new EmailNotVerifiedException(user.getEmail());
         }
 
-        String token = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
         log.info("User logged in: {}", user.getEmail());
-        return buildAuthResponse(token, refreshToken, user);
+        return issueTokensFor(user);
     }
 
     @Override
@@ -131,14 +135,12 @@ public class AuthService implements AuthUseCase {
                     return saved;
                 });
 
-        String token = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
         log.info("User logged in with Google: {}", user.getEmail());
-        return buildAuthResponse(token, refreshToken, user);
+        return issueTokensFor(user);
     }
 
     @Override
+    @Transactional
     public AuthResponse refreshToken(String refreshToken) {
         String email = jwtService.extractUsername(refreshToken);
         AuthUser user = userRepository.findByEmail(email)
@@ -148,9 +150,47 @@ public class AuthService implements AuthUseCase {
             throw new IllegalArgumentException("Invalid refresh token");
         }
 
-        String newToken = jwtService.generateToken(user);
-        String newRefresh = jwtService.generateRefreshToken(user);
-        return buildAuthResponse(newToken, newRefresh, user);
+        // Server-side revocation check: the JWT may still be signed and unexpired,
+        // but if its session row is gone (logged out, or already rotated away) the
+        // token is no longer accepted.
+        String tokenHash = refreshTokenHasher.hash(refreshToken);
+        refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new IllegalArgumentException("Refresh token is no longer valid"));
+
+        // Rotation: consume the presented token so it cannot be replayed, then
+        // issue a fresh pair.
+        refreshTokenRepository.deleteByTokenHash(tokenHash);
+
+        log.info("Tokens refreshed for: {}", user.getEmail());
+        return issueTokensFor(user);
+    }
+
+    @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        // Deleting a missing hash is a no-op, so logout is idempotent and never
+        // fails even if the client's token was already rotated or expired.
+        refreshTokenRepository.deleteByTokenHash(refreshTokenHasher.hash(refreshToken));
+        log.info("Refresh token invalidated on logout");
+    }
+
+    /**
+     * Issues a fresh access + refresh token pair and records the refresh token as
+     * an active session (storing only its hash). Shared by login, Google login
+     * and refresh rotation.
+     */
+    private AuthResponse issueTokensFor(AuthUser user) {
+        String token = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        refreshTokenRepository.save(RefreshToken.builder()
+                .tokenHash(refreshTokenHasher.hash(refreshToken))
+                .userId(user.getId().value())
+                .expiresAt(jwtService.getExpiration(refreshToken))
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        return buildAuthResponse(token, refreshToken, user);
     }
 
     private AuthResponse buildAuthResponse(String token, String refreshToken, AuthUser user) {

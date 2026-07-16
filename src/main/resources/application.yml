@@ -57,7 +57,7 @@ reservation:
     cron: ${REMINDER_CRON:0 */15 * * * *}
 
 jwt:
-  expiration: 86400000       # 24 hours in ms
+  expiration: 900000       # 24 hours in ms
   refresh-expiration: 604800000  # 7 days in ms
 
 

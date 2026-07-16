@@ -186,7 +186,7 @@ public class ReservationService implements ReservationUseCase {
                 .orElseThrow(() -> new ReservationNotFoundException(id));
 
         assertCanAccess(reservation, requester);
-        reservation.cancel();
+        reservation.cancel(LocalDateTime.now());
         Reservation saved = reservationRepository.save(reservation);
 
         Restaurant restaurant = restaurantRepository.findById(saved.getRestaurantId())
@@ -287,7 +287,7 @@ public class ReservationService implements ReservationUseCase {
                 .endDate(r.getEndDate())
                 .partySize(r.getPartySize())
                 .bookerEmail(r.getBookerEmail())
-                .status(r.getStatus())
+                .status(r.customerVisibleStatus())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

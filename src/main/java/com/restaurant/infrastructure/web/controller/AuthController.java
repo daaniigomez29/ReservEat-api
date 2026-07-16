@@ -2,6 +2,7 @@ package com.restaurant.infrastructure.web.controller;
 
 import com.restaurant.application.dto.request.GoogleLoginRequest;
 import com.restaurant.application.dto.request.LoginRequest;
+import com.restaurant.application.dto.request.LogoutRequest;
 import com.restaurant.application.dto.request.RegisterOwnerRequest;
 import com.restaurant.application.dto.request.RegisterRequest;
 import com.restaurant.application.dto.response.AuthResponse;
@@ -49,5 +50,11 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         return ResponseEntity.ok(authUseCase.refreshToken(refreshToken));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        authUseCase.logout(request.getRefreshToken());
+        return ResponseEntity.noContent().build();
     }
 }

@@ -2,6 +2,7 @@ package com.restaurant;
 
 import com.restaurant.application.dto.request.CreateReservationRequest;
 import com.restaurant.application.usecase.ReservationService;
+import com.restaurant.domain.exception.DomainException;
 import com.restaurant.domain.exception.ReservationConflictException;
 import com.restaurant.domain.model.*;
 import com.restaurant.domain.repository.AuthUserRepository;
@@ -198,5 +199,62 @@ class ReservationServiceTest {
 
         assertThat(response.getTableId()).isEqualTo(11L);
         assertThat(response.getTableLabel()).isEqualTo("M11");
+    }
+
+    @Test
+    @DisplayName("Booker can cancel a reservation that has not started yet")
+    void cancelReservation_whenStartInFuture_setsCancelled() {
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(13).withMinute(0);
+        Reservation reservation = Reservation.builder()
+                .id(5L).restaurantId(1L).partySize(2).userId(99L)
+                .startDate(start).endDate(start.plusHours(2))
+                .status(ReservationStatus.CONFIRMED)
+                .build();
+
+        when(reservationRepository.findById(5L)).thenReturn(Optional.of(reservation));
+        when(restaurantRepository.findById(1L)).thenReturn(Optional.of(restaurant));
+        when(reservationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = reservationService.cancelReservation(
+                5L, AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build());
+
+        assertThat(response.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("Cannot cancel a reservation whose start time has already passed")
+    void cancelReservation_whenStartInPast_throwsAndDoesNotSave() {
+        LocalDateTime start = LocalDateTime.now().minusHours(1);
+        Reservation reservation = Reservation.builder()
+                .id(5L).restaurantId(1L).partySize(2).userId(99L)
+                .startDate(start).endDate(start.plusHours(2))
+                .status(ReservationStatus.CONFIRMED)
+                .build();
+
+        when(reservationRepository.findById(5L)).thenReturn(Optional.of(reservation));
+
+        assertThatThrownBy(() -> reservationService.cancelReservation(
+                5L, AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build()))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("already passed");
+
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Customer view surfaces an internally SEATED reservation as CONFIRMED")
+    void getReservationById_whenSeated_customerSeesConfirmed() {
+        Reservation reservation = Reservation.builder()
+                .id(5L).restaurantId(1L).partySize(2).userId(99L)
+                .status(ReservationStatus.SEATED)
+                .build();
+
+        when(reservationRepository.findById(5L)).thenReturn(Optional.of(reservation));
+        when(restaurantRepository.findById(1L)).thenReturn(Optional.of(restaurant));
+
+        var response = reservationService.getReservationById(
+                5L, AuthUser.builder().id(new UserId(99L)).globalRole(GlobalRole.USER).build());
+
+        assertThat(response.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
     }
 }

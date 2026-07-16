@@ -15,4 +15,7 @@ public interface AuthUseCase {
     AuthResponse loginWithGoogle(GoogleLoginRequest request);
 
     AuthResponse refreshToken(String refreshToken);
+
+    /** Invalidates the given refresh token server-side (logout). Idempotent. */
+    void logout(String refreshToken);
 }

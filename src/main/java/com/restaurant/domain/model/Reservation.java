@@ -50,12 +50,29 @@ public class Reservation {
         return this.startDate.isBefore(otherEnd) && this.endDate.isAfter(otherStart);
     }
 
-    public void cancel() {
+    public void cancel(LocalDateTime now) {
         if (ReservationStatus.COMPLETED.equals(this.status)
                 || ReservationStatus.NO_SHOW.equals(this.status)) {
             throw new DomainException("Cannot cancel a finished reservation");
         }
+        // Once the reservation's start time has arrived, it can no longer be
+        // cancelled: the slot is in progress or past, and cancelling makes no
+        // sense (a party that never turns up is handled as a no-show instead).
+        if (!this.startDate.isAfter(now)) {
+            throw new DomainException("Cannot cancel a reservation whose start time has already passed");
+        }
         this.status = ReservationStatus.CANCELLED;
+    }
+
+    /**
+     * Status as the booking customer should see it. SEATED is an internal
+     * operational detail of the restaurant that carries no meaning for the
+     * customer, so it is surfaced as CONFIRMED.
+     */
+    public ReservationStatus customerVisibleStatus() {
+        return ReservationStatus.SEATED.equals(this.status)
+                ? ReservationStatus.CONFIRMED
+                : this.status;
     }
 
     /** Guests have arrived and been seated at their table. */
